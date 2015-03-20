@@ -23,8 +23,6 @@ var statusNameMap = map[ChannelManagerStatus]string{
 	CHANNEL_MANAGER_STATUS_CLOSED:        "closed",
 }
 
-//摘要信息模板
-
 type ChannelManager interface {
 	//初始化管道管理器
 	//参数channelLen代表管道管理器中的各类管道初始长度
@@ -117,7 +115,9 @@ func (chanman *myChannelManager) ReqChan() (chan base.Request, error) {
 	if err := chanman.checkStatus(); err != nil {
 		return nil, err
 	}
+	return chanman.reqCh, nil
 }
+
 func (chanman *myChannelManager) RespChan() (chan base.Response, error) {
 	chanman.rwmutex.RLock()
 	defer chanman.rwmutex.RUnlock()
@@ -143,4 +143,28 @@ func (chanman *myChannelManager) ErrorChan() (chan error, error) {
 		return nil, err
 	}
 	return chanman.errorCh, nil
+}
+
+//摘要信息模板
+var chanmanSummaryTemplate = "status: %s, " +
+	"requestChannel: %d/%d, " +
+	"responseChannel: %d/%d, " +
+	"itemChannel: %d/%d, " +
+	"errorChannel: %d/%d"
+
+func (chanman *myChannelManager) Summary() string {
+	summary := fmt.Sprintf(chanmanSummaryTemplate, statusNameMap[chanman.status],
+		len(chanman.reqCh), cap(chanman.reqCh),
+		len(chanman.respCh), cap(chanman.respCh),
+		len(chanman.itemCh), cap(chanman.itemCh),
+		len(chanman.errorCh), cap(chanman.errorCh))
+	return summary
+}
+
+func (chanman *myChannelManager) ChannelLen() uint {
+	return chanman.channelLen
+}
+
+func (chanman *myChannelManager) Status() ChannelManagerStatus {
+	return chanman.status
 }
