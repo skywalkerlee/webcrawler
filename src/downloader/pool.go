@@ -1,6 +1,8 @@
 package downloader
 
 import (
+	"errors"
+	"fmt"
 	"middleware"
 	"reflect"
 )
@@ -33,5 +35,26 @@ func NewDownloaderPool(total uint32, gen GenPageDownloader) (PageDownloaderPool,
 }
 
 func (dlPool *myDownloaderPool) Take() (PageDownloader, error) {
+	entity, err := dlPool.pool.Take()
+	if err != nil {
+		return nil, err
+	}
+	dl, ok := entity.(PageDownloader)
+	if !ok {
+		errMsg := fmt.Sprintf("The type of entity is NOT %s!\n", dlPool.etype)
+		panic(errors.New(errMsg))
+	}
+	return dl, nil
+}
 
+func (dlPool *myDownloaderPool) Return(dl PageDownloader) error {
+	return dlPool.pool.Return(dl)
+}
+
+func (dlPool *myDownloaderPool) Total() uint32 {
+	return dlPool.pool.Total()
+}
+
+func (dlPool *myDownloaderPool) Used() uint32 {
+	return dlPool.pool.Used()
 }
